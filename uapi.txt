@@ -1,0 +1,23 @@
+# ✅ BUAT API TOKEN (untuk akses API eksternal)
+uapi Tokens create_full_access name=autotoken_$(whoami)
+
+# ✅ BUAT AKUN FTP
+uapi Ftp::add_ftp user=ftpbackup pass='StrongFtp123!' quota=100 homedir=public_html/backupftp
+
+# ✅ BUAT EMAIL ACCOUNT
+uapi Email::add_pop email=backupuser password='StrongMail123!' quota=250
+
+# ✅ LIST FILE DI ROOT (untuk audit / verifikasi backup)
+uapi Fileman::list_files dir=public_html
+
+# ✅ TRIGGER BACKUP KE HOME DIR
+uapi Backup::fullbackup_to_homedir
+
+# ✅ LIST ZONA DNS (cek domain yang tersedia)
+uapi DNS::lookup domain=yourdomain.com
+
+# ✅ TAMBAH A RECORD (contoh: subdomain pointing ke IP backup VPS)
+uapi DNS::mass_edit_zone domain=yourdomain.com serial=auto txt=1 edit=1 name=sub.yourdomain.com class=IN type=A ttl=3600 address=123.123.123.123
+
+# ✅ CEK PENGGUNAAN BANDWIDTH
+uapi Bandwidth::query
