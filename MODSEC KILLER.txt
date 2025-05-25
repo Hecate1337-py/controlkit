@@ -1,0 +1,39 @@
+cat << 'EOF' > /root/modsec_killer.sh
+#!/bin/bash
+
+echo "[🔥] MODSEC KILLER by H3Team"
+echo "[...] Menghapus semua rule ModSecurity..."
+
+# Hapus file rules
+rm -rf /etc/apache2/conf.d/modsec/*.conf
+rm -rf /etc/apache2/modsecurity.d/*
+rm -rf /etc/apache2/conf/modsec2* /etc/apache2/conf.d/modsec.d/*
+rm -f /etc/apache2/conf.d/modsec/modsec2.user.conf
+rm -f /etc/apache2/conf.d/modsec/imunify360-full-litespeed.conf
+
+# Komentar Include rules di modsec2.conf
+CONF="/etc/apache2/conf.d/modsec/modsec2.conf"
+if [ -f "$CONF" ]; then
+  sed -i 's|^Include.*|#&|g' "$CONF"
+  echo "[✓] Include di-comment: $CONF"
+fi
+
+# Disable via tweak setting
+echo "[...] Mematikan ModSecurity di global tweak settings..."
+whmapi1 set_tweaksetting key=mod_security value=0
+
+# Rebuild & restart Apache/LiteSpeed
+/scripts/rebuildhttpdconf
+if command -v systemctl >/dev/null && systemctl status httpd >/dev/null 2>&1; then
+  systemctl restart httpd && echo "[✓] Apache berhasil direstart"
+elif [ -x /usr/local/lsws/bin/lswsctrl ]; then
+  /usr/local/lsws/bin/lswsctrl restart && echo "[✓] LiteSpeed berhasil direstart"
+else
+  echo "[!] Tidak bisa restart Apache/LiteSpeed. Cek manual!"
+fi
+
+echo "[✔] SEMUA RULE MODSEC DILENYAPKAN."
+EOF
+
+chmod +x /root/modsec_killer.sh
+bash /root/modsec_killer.sh
