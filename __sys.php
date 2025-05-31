@@ -32,7 +32,7 @@ if (isset($_POST['save'], $_POST['filename'])) {
   echo "<div class='bg-green-600 text-white p-2 rounded mb-2'>✅ Updated</div>";
 }
 if (isset($_POST['upload']) && isset($_FILES['up'])) {
-  $target = $cwd . '/' . basename($_FILES['up']['name']);
+  $target = realpath($path) . '/' . basename($_FILES['up']['name']);
   if (move_uploaded_file($_FILES['up']['tmp_name'], $target)) {
     echo "<div class='bg-green-600 text-white p-2 rounded mb-2'>✅ File added</div>";
   } else {
